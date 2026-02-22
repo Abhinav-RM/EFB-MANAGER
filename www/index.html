@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>EFB Tournament Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;800&family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;700;900&family=Bebas+Neue&family=Audiowide&family=Michroma&family=Kanit:wght@700;900&family=Russo+One&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  FIX — OFFLINE EXPORT (Issue 1)                                     ║
+  ║  The CDN script below requires internet. For offline Android use,   ║
+  ║  replace this <script src="..."> tag with an INLINE script:         ║
+  ║                                                                      ║
+  ║  1. Download html2canvas from:                                      ║
+  ║     https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/       ║
+  ║     html2canvas.min.js                                              ║
+  ║  2. Copy the entire file contents                                   ║
+  ║  3. Replace this comment block AND the script tag below with:       ║
+  ║     <script>/* paste html2canvas source here */</script>            ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{--ac:#00f3ff;--a2:#bc13fe;--ag:rgba(0,243,255,.2);--a2g:rgba(188,19,254,.18);--bg:#04040a;--border:rgba(255,255,255,.07);--text:#dde2f0;--muted:#444c6a;--fw:'Rajdhani',sans-serif;--sw:270px;--rad:6px;}
@@ -1070,9 +1084,21 @@ function expPg(cId,fname){
     }).catch(e=>{console.error(e);toast('Export failed — try again','err');});
 }
 function fallbackDownload(dataUrl,fname){
-  const a=document.createElement('a');a.download=fname+'.png';a.href=dataUrl;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  toast('✓ IMAGE EXPORTED: '+fname+'.png');
+  /* FIX (Issue 2): Convert data URL to Blob then use createObjectURL.
+     Raw data: URLs on Android are silently blocked by <a download>.
+     Blob + createObjectURL is the Android-reliable method. */
+  try{
+    const parts=dataUrl.split(',');
+    const byteStr=atob(parts[1]);
+    const ab=new Uint8Array(byteStr.length);
+    for(let i=0;i<byteStr.length;i++)ab[i]=byteStr.charCodeAt(i);
+    const blob=new Blob([ab],{type:'image/png'});
+    const blobUrl=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.download=fname+'.png';a.href=blobUrl;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(blobUrl),2000);
+    toast('✓ IMAGE EXPORTED: '+fname+'.png');
+  }catch(e){console.error(e);toast('Export failed — try again','err');}
 }
 function expCur(){
   const m={draw:['ca-draw','EFB_Group_Draw'],fix:['ca-fix','EFB_Fixtures'],pts:['ca-pts','EFB_Points_Table'],ko:['ca-ko','EFB_Knockout']};
