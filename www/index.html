@@ -4,21 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>EFB Tournament Manager</title>
+<script src="cordova.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;800&family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;700;900&family=Bebas+Neue&family=Audiowide&family=Michroma&family=Kanit:wght@700;900&family=Russo+One&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<!--
-  ╔══════════════════════════════════════════════════════════════════════╗
-  ║  FIX — OFFLINE EXPORT (Issue 1)                                     ║
-  ║  The CDN script below requires internet. For offline Android use,   ║
-  ║  replace this <script src="..."> tag with an INLINE script:         ║
-  ║                                                                      ║
-  ║  1. Download html2canvas from:                                      ║
-  ║     https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/       ║
-  ║     html2canvas.min.js                                              ║
-  ║  2. Copy the entire file contents                                   ║
-  ║  3. Replace this comment block AND the script tag below with:       ║
-  ║     <script>/* paste html2canvas source here */</script>            ║
-  ╚══════════════════════════════════════════════════════════════════════╝
--->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{--ac:#00f3ff;--a2:#bc13fe;--ag:rgba(0,243,255,.2);--a2g:rgba(188,19,254,.18);--bg:#04040a;--border:rgba(255,255,255,.07);--text:#dde2f0;--muted:#444c6a;--fw:'Rajdhani',sans-serif;--sw:270px;--rad:6px;}
@@ -306,19 +293,6 @@ input.si::-webkit-inner-spin-button,input.si::-webkit-outer-spin-button{-webkit-
 .dg-grp-t{padding:7px 12px;font-size:12px;color:var(--text);border-bottom:1px solid rgba(255,255,255,.03);}
 .dg-grp-t:last-child{border-bottom:none;}
 
-/* MATCH COUNT BUTTON */
-#mcBtn{position:fixed;top:68px;left:14px;z-index:400;width:46px;height:46px;border-radius:12px;background:rgba(4,4,10,.94);border:1px solid rgba(0,243,255,.25);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--ac);cursor:pointer;backdrop-filter:blur(20px);user-select:none;transition:all .25s;flex-direction:column;gap:2px;line-height:1;}
-#mcBtn:hover{background:rgba(0,243,255,.1);border-color:var(--ac);transform:scale(1.06);}
-#mcBtn.on{background:rgba(0,243,255,.15);box-shadow:0 0 18px var(--ag);}
-#mcBtn .mc-lbl{font-size:7px;letter-spacing:1px;color:var(--muted);}
-#mcPanel{position:fixed;top:68px;left:68px;z-index:401;background:rgba(4,4,12,.97);border:1px solid var(--ac);border-radius:14px;padding:14px;min-width:160px;backdrop-filter:blur(28px);display:none;flex-direction:column;gap:10px;box-shadow:0 0 40px rgba(0,243,255,.12);}
-#mcPanel.show{display:flex;}
-.mcp-t{font-size:9px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;}
-.mcp-row{display:flex;gap:6px;}
-.mcp-n{width:44px;height:36px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);font-family:var(--fw);font-size:14px;font-weight:700;transition:all .2s;}
-.mcp-n:hover{border-color:var(--ac);color:var(--ac);}
-.mcp-n.on{border-color:var(--ac);color:var(--ac);background:rgba(0,243,255,.08);}
-
 /* TOAST */
 #toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%) translateY(10px);background:rgba(0,180,90,.12);border:1px solid rgba(0,200,100,.25);border-radius:30px;padding:6px 20px;font-size:11px;letter-spacing:3px;color:#00cc66;z-index:600;opacity:0;pointer-events:none;white-space:nowrap;transition:opacity .3s,transform .3s;}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -354,12 +328,6 @@ input.si::-webkit-inner-spin-button,input.si::-webkit-outer-spin-button{-webkit-
   <div class="qp-row" id="qNRow"></div>
   <button class="qp-apply" onclick="applyQ()">✓ MARK QUALIFIED</button>
   <button class="qp-rm" onclick="removeQ()">✕ REMOVE ALL Q</button>
-</div>
-
-<div id="mcBtn" onclick="togMC()" title="Matches per Group"><span id="mcBtnVal">2</span><span class="mc-lbl">MATCHES</span></div>
-<div id="mcPanel">
-  <div class="mcp-t">MATCHES PER GROUP</div>
-  <div class="mcp-row" id="mcNRow"></div>
 </div>
 
 <nav id="sb">
@@ -663,6 +631,12 @@ const AX=(()=>{
 })();
 
 /* ══ LOADING ══ */
+function dismissLd(){
+  const ldEl=document.getElementById('ld');
+  if(!ldEl)return;
+  ldEl.classList.add('out');
+  setTimeout(()=>{if(ldEl.parentNode)ldEl.remove();},900);
+}
 function initLd(){
   const pc=document.getElementById('ldP');
   for(let i=0;i<60;i++){
@@ -674,12 +648,8 @@ function initLd(){
   const msgs=['LOADING DATA...','RESTORING PROGRESS...','INITIALIZING...','ALMOST READY...','READY ✓'];
   let mi=0;const el=document.getElementById('ldSt');
   const iv=setInterval(()=>{mi++;if(mi<msgs.length)el.textContent=msgs[mi];else clearInterval(iv);},660);
-  setTimeout(()=>AX.boot(),200);
-  setTimeout(()=>{
-    clearInterval(iv);
-    const ldEl=document.getElementById('ld');
-    if(ldEl){ldEl.classList.add('out');setTimeout(()=>ldEl.remove(),900);}
-  },3500);
+  /* Absolute fail-safe: loader is always dismissed after 4.5 s no matter what */
+  setTimeout(()=>{clearInterval(iv);dismissLd();},4500);
 }
 
 /* ══ SIDEBAR ══ */
@@ -700,23 +670,6 @@ function togQ(){
   else{p.classList.add('show');document.getElementById('qBtn').classList.add('on');renderQP();closeSB();document.getElementById('sp').classList.remove('open');}
 }
 function hideQ(){document.getElementById('qPanel').classList.remove('show');document.getElementById('qBtn').classList.remove('on');}
-
-/* ══ MATCH COUNT PANEL ══ */
-function togMC(){
-  const p=document.getElementById('mcPanel');
-  if(p.classList.contains('show'))hideMC();
-  else{p.classList.add('show');document.getElementById('mcBtn').classList.add('on');renderMCP();closeSB();document.getElementById('sp').classList.remove('open');hideQ();}
-}
-function hideMC(){document.getElementById('mcPanel').classList.remove('show');document.getElementById('mcBtn').classList.remove('on');}
-function renderMCP(){
-  const row=document.getElementById('mcNRow');row.innerHTML='';
-  [2,3,4].forEach(n=>{
-    const b=document.createElement('button');b.className='mcp-n'+(n===S.mc?' on':'');
-    b.textContent=n;
-    b.onclick=()=>{S.mc=n;document.getElementById('mcBtnVal').textContent=n;const si=document.getElementById('sgM');if(si)si.value=n;renderMCP();bFix();updDash();aS();hideMC();toast(`✓ ${n} MATCHES PER GROUP`);};
-    row.appendChild(b);
-  });
-}
 function renderQP(){
   const row=document.getElementById('qNRow');row.innerHTML='';
   [1,2,3,4].forEach(n=>{
@@ -781,7 +734,6 @@ function applyS(){
   S.tc=+document.getElementById('sgT').value;
   S.mc=+document.getElementById('sgM').value;
   S.ko=+document.getElementById('sgK').value;
-  document.getElementById('mcBtnVal').textContent=S.mc;
   bDraw();bFix();bPts();bKO();updDash();aS();
 }
 
@@ -1057,119 +1009,127 @@ function updDash(){
   document.getElementById('if-tt').textContent=tt;document.getElementById('if-mg').textContent=S.mc;
 }
 
-/* ══ EXPORT — Now works on Android APK ══ */
-function expPg(cId, fname) {
+/* ══ EXPORT — Android-permissions-aware, saves to Pictures/Gallery ══ */
+
+/* Convert base-64 string to Blob (required for cordova-plugin-file write) */
+function b64toBlob(b64,mimeType){
+  const bytes=atob(b64);
+  const ab=new ArrayBuffer(bytes.length);
+  const ia=new Uint8Array(ab);
+  for(let i=0;i<bytes.length;i++)ia[i]=bytes.charCodeAt(i);
+  return new Blob([ab],{type:mimeType});
+}
+
+/* Save the canvas PNG blob to device Pictures folder via cordova-plugin-file */
+function _saveToPictures(blob,fname){
+  /* Prefer the native Pictures/DCIM directory; fall back to external root */
+  const picDir=
+    (window.cordova&&cordova.file&&cordova.file.externalRootDirectory)
+      ? cordova.file.externalRootDirectory+'Pictures/'
+      : (window.cordova&&cordova.file&&cordova.file.documentsDirectory)
+        ? cordova.file.documentsDirectory
+        : null;
+
+  if(!picDir){fallbackDownload(URL.createObjectURL(blob),fname);return;}
+
+  window.resolveLocalFileSystemURL(picDir,
+    dir=>{
+      dir.getFile(fname+'.png',{create:true,exclusive:false},
+        fileEntry=>{
+          fileEntry.createWriter(fw=>{
+            fw.onwriteend=()=>{
+              /* Ask MediaScannerPlugin (if present) to index the file so it shows in Gallery */
+              if(window.MediaScannerPlugin){
+                MediaScannerPlugin.scanFile(fileEntry.toURL(),()=>{},()=>{});
+              }
+              toast('✓ SAVED TO PICTURES: '+fname+'.png');
+            };
+            fw.onerror=err=>{console.error('FileWriter error:',err);toast('Save failed — check storage','err');};
+            fw.write(blob);
+          },err=>{console.error('createWriter error:',err);toast('Writer error','err');});
+        },
+        err=>{console.error('getFile error:',err);toast('Could not create file','err');}
+      );
+    },
+    err=>{
+      console.error('resolveLocalFileSystemURL error:',err);
+      /* Pictures/ dir may not exist yet — try to create it from external root */
+      if(window.cordova&&cordova.file&&cordova.file.externalRootDirectory){
+        window.resolveLocalFileSystemURL(cordova.file.externalRootDirectory,root=>{
+          root.getDirectory('Pictures',{create:true},picturesDir=>{
+            picturesDir.getFile(fname+'.png',{create:true,exclusive:false},fe=>{
+              fe.createWriter(fw=>{
+                fw.onwriteend=()=>toast('✓ SAVED TO PICTURES: '+fname+'.png');
+                fw.onerror=()=>toast('Save failed','err');
+                fw.write(blob);
+              },()=>toast('Writer error','err'));
+            },()=>toast('Could not create file','err'));
+          },()=>toast('Could not create Pictures folder','err'));
+        },()=>toast('Storage unavailable','err'));
+      } else {
+        toast('Storage path unavailable','err');
+      }
+    }
+  );
+}
+
+/* Main export entry-point */
+function expPg(cId,fname){
   AX.play('exp');
   toast('⏳ GENERATING IMAGE...');
-  const el = document.getElementById(cId);
+  const el=document.getElementById(cId);
+  if(!el){toast('Canvas not found','err');return;}
 
-  html2canvas(el, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#06060e',
-    allowTaint: true
-  }).then(canvas => {
-    const dataUrl = canvas.toDataURL('image/png');
-    
-    // Check if we are running as an installed App
-    if (window.cordova) {
-      const b64 = dataUrl.split(',')[1];
-      const filename = fname + "_" + Date.now() + ".png";
-      
-      // We target the 'Pictures' folder so it shows up in your Gallery
-      window.resolveLocalFileSystemURL(cordova.file.externalRootDirectory, (dir) => {
-        dir.getDirectory("Pictures", { create: true }, (pixDir) => {
-          pixDir.getFile(filename, { create: true }, (fileEntry) => {
-            fileEntry.createWriter((fileWriter) => {
-              fileWriter.onwriteend = () => {
-                toast('✅ SAVED TO GALLERY/PICTURES');
-              };
-              fileWriter.onerror = (e) => {
-                console.error("Write failed", e);
-                toast('Export failed', 'err');
-              };
-              const blob = b64toBlob(b64, 'image/png');
-              fileWriter.write(blob);
-            });
-          });
-        });
-      }, (err) => {
-        console.error("FileSystem Error", err);
-        // If the fancy save fails, try the basic one
-        fallbackDownload(dataUrl, fname);
-      });
-    } else {
-      fallbackDownload(dataUrl, fname);
-    }
-  }).catch(e => {
-    console.error(e);
-    toast('Export failed — try again', 'err');
-  });
-}
-
-// Helper to convert the image data for Android storage
-function b64toBlob(b64Data, contentType) {
-  const byteCharacters = atob(b64Data);
-  const byteArrays = [];
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512);
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
-  return new Blob(byteArrays, { type: contentType });
-}
-
-function fallbackDownload(dataUrl, fname) {
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = fname + '.png';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  toast('✓ IMAGE EXPORTED: ' + fname + '.png');
-}
-  
-      /* Try Cordova file system first, then browser download */
+  html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#06060e',allowTaint:true,logging:false})
+    .then(canvas=>{
       const dataUrl=canvas.toDataURL('image/png');
+
+      /* ── Cordova / Android path ── */
       if(window.cordova&&window.resolveLocalFileSystemURL){
         const b64=dataUrl.split(',')[1];
-        const folder=cordova.file.externalRootDirectory||cordova.file.documentsDirectory;
-        window.resolveLocalFileSystemURL(folder,dir=>{
-          dir.getFile(fname+'.png',{create:true},fileEntry=>{
-            fileEntry.createWriter(fw=>{
-              fw.onwriteend=()=>toast('✓ SAVED TO DEVICE: '+fname+'.png');
-              fw.onerror=()=>fallbackDownload(dataUrl,fname);
-              const ab=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-              fw.write(new Blob([ab],{type:'image/png'}));
-            });
-          },()=>fallbackDownload(dataUrl,fname));
-        },()=>fallbackDownload(dataUrl,fname));
+        const blob=b64toBlob(b64,'image/png');
+        const WRITE_PERM='android.permission.WRITE_EXTERNAL_STORAGE';
+
+        if(window.cordova.plugins&&window.cordova.plugins.permissions){
+          /* cordova-plugin-android-permissions is available */
+          const perms=cordova.plugins.permissions;
+          perms.checkPermission(WRITE_PERM,status=>{
+            if(status.hasPermission){
+              _saveToPictures(blob,fname);
+            } else {
+              perms.requestPermission(WRITE_PERM,
+                granted=>{
+                  if(granted.hasPermission){
+                    _saveToPictures(blob,fname);
+                  } else {
+                    toast('Storage permission denied','err');
+                  }
+                },
+                ()=>toast('Permission request failed','err')
+              );
+            }
+          },()=>{
+            /* checkPermission errored — attempt save anyway (older Android may not need it) */
+            _saveToPictures(blob,fname);
+          });
+        } else {
+          /* Plugin not present — attempt save directly (Android 10+ scoped storage) */
+          _saveToPictures(blob,fname);
+        }
       } else {
+        /* ── Browser / desktop fallback ── */
         fallbackDownload(dataUrl,fname);
       }
-    }).catch(e=>{console.error(e);toast('Export failed — try again','err');});
+    })
+    .catch(e=>{console.error('html2canvas error:',e);toast('Export failed — try again','err');});
 }
+
 function fallbackDownload(dataUrl,fname){
-  /* FIX (Issue 2): Convert data URL to Blob then use createObjectURL.
-     Raw data: URLs on Android are silently blocked by <a download>.
-     Blob + createObjectURL is the Android-reliable method. */
-  try{
-    const parts=dataUrl.split(',');
-    const byteStr=atob(parts[1]);
-    const ab=new Uint8Array(byteStr.length);
-    for(let i=0;i<byteStr.length;i++)ab[i]=byteStr.charCodeAt(i);
-    const blob=new Blob([ab],{type:'image/png'});
-    const blobUrl=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.download=fname+'.png';a.href=blobUrl;
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(blobUrl),2000);
-    toast('✓ IMAGE EXPORTED: '+fname+'.png');
-  }catch(e){console.error(e);toast('Export failed — try again','err');}
+  const a=document.createElement('a');a.download=fname+'.png';a.href=dataUrl;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('✓ IMAGE EXPORTED: '+fname+'.png');
 }
+
 function expCur(){
   const m={draw:['ca-draw','EFB_Group_Draw'],fix:['ca-fix','EFB_Fixtures'],pts:['ca-pts','EFB_Points_Table'],ko:['ca-ko','EFB_Knockout']};
   const e=m[S.cur];if(e)expPg(e[0],e[1]);else toast('Navigate to a canvas page first','err');
@@ -1305,31 +1265,46 @@ function e2(s){return s?String(s).replace(/"/g,'&quot;'):''}
 /* ══ KEYBOARD ══ */
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveAll();}
-  if(e.key==='Escape'){closeSB();document.getElementById('sp').classList.remove('open');hideQ();hideMC();closeDG();}
+  if(e.key==='Escape'){closeSB();document.getElementById('sp').classList.remove('open');hideQ();closeDG();}
 });
 
 /* ══ CLOSE Q PANEL on outside click ══ */
 document.addEventListener('pointerdown',e=>{
   const qp=document.getElementById('qPanel'),qb=document.getElementById('qBtn');
   if(!qp.contains(e.target)&&!qb.contains(e.target))hideQ();
-  const mp=document.getElementById('mcPanel'),mb=document.getElementById('mcBtn');
-  if(!mp.contains(e.target)&&!mb.contains(e.target))hideMC();
 });
 
 /* ══ INIT ══ */
-window.onload=function(){
-  initLd();
-  setTimeout(()=>{
-    loadAll();bDraw();bFix();bPts();bKO();updDash();
-    document.getElementById('mcBtnVal').textContent=S.mc;
-    /* Fade-in dashboard */
-    const pg=document.getElementById('pg-dash');
+function _runApp(){
+  /* Fail-safe: wrap all data loading so a single error never hangs the loader */
+  try{loadAll();}catch(e){console.error('loadAll error:',e);}
+  try{bDraw();bFix();bPts();bKO();updDash();}catch(e){console.error('build error:',e);}
+  /* Loader dismissed here (normal path) — fail-safe timeout in initLd handles crash path */
+  dismissLd();
+  /* Fade-in dashboard */
+  const pg=document.getElementById('pg-dash');
+  if(pg){
     pg.style.cssText='opacity:0;transform:translateY(12px);transition:opacity .5s,transform .5s;';
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       pg.style.opacity='1';pg.style.transform='translateY(0)';
       setTimeout(()=>{pg.style.cssText='';},500);
     }));
-  },200);
+  }
+}
+
+window.onload=function(){
+  initLd();
+  if(window.cordova){
+    /* Android/Cordova path — wait for native layer, then boot audio + app */
+    document.addEventListener('deviceready',()=>{
+      try{AX.init();setTimeout(()=>AX.boot(),200);}catch(e){console.error('AX boot error:',e);}
+      setTimeout(_runApp,500);
+    },false);
+  } else {
+    /* Browser / desktop path — behaves exactly like before */
+    try{AX.init();setTimeout(()=>AX.boot(),200);}catch(e){}
+    setTimeout(_runApp,200);
+  }
 };
 </script>
 </body>
